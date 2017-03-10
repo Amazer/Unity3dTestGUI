@@ -20,10 +20,5 @@ namespace Pal
             base.Start();
             show = new TestAttributeShow(this);
         }
-        [ContextMenu("show")]
-        public void Show()
-        {
-            show.Show();
-        }
     }
 }

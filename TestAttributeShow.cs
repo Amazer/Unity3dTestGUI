@@ -5,9 +5,51 @@ using System;
 using System.Reflection;
 namespace Pal
 {
+         
+    public class NameValueStr
+    {
+        private UnityEngine.Object _dataObj;
+        private FieldInfo _fieldInfo;
+        private string _name;
+        private string _strValue;
+        public string Name
+        {
+            get
+            {
+                return _name;
+            }
+        }
+        public string ValueStr
+        {
+            get
+            {
+                Refresh();
+                return _strValue;
+            }
+        }
+        public NameValueStr(FieldInfo info,UnityEngine.Object dataObj,string fieldName)
+        {
+            _dataObj = dataObj;
+            _fieldInfo = info;
+            _name = fieldName;
+        }
+        public void Refresh()
+        {
+            object infoValue = _fieldInfo.GetValue(_dataObj);
+            _strValue=TestAttributeShow.GetValueStr(infoValue);
+        }
+    }
 	public class TestAttributeShow  {
         private UnityEngine.Object _obj;
-        private List<FieldInfo> infoslist=new List<FieldInfo>();
+        private List<FieldInfo> _infoslist=new List<FieldInfo>();
+        private List<NameValueStr> _nameValStrList = new List<NameValueStr>();
+        public int propertyCount
+        {
+            get
+            {
+                return _nameValStrList.Count;
+            }
+        }
         public TestAttributeShow(UnityEngine.Object obj)
         {
             _obj=obj;
@@ -17,15 +59,34 @@ namespace Pal
                 FieldInfo info = infos[i];
                 if(info.IsDefined(typeof(TestDisplayAttribute),true))
                 {
-                    infoslist.Add(info);
+                    _infoslist.Add(info);
+                    NameValueStr nvs = new NameValueStr(info, _obj, info.Name);
+                    _nameValStrList.Add(nvs);
                 }
             }
         }
-        public void Show()
+        public void DrawPropertyOnGUI(GUIStyle style)
         {
-            for(int i=0,imax=infoslist.Count;i<imax;++i)
+            GUILayout.BeginScrollView(Vector2.zero);
+            for(int i=0,imax=_nameValStrList.Count; i<imax;++i)
             {
-                FieldInfo info = infoslist[i];
+                NameValueStr str = _nameValStrList[i];
+                if(style!=null)
+                {
+                    GUILayout.Label(str.Name + ":" + str.ValueStr, style);
+                }
+                else
+                {
+                    GUILayout.Label(str.Name + ":" + str.ValueStr);
+                }
+            }
+            GUILayout.EndScrollView();
+        }
+        public void ShowToString()
+        {
+            for(int i=0,imax=_infoslist.Count;i<imax;++i)
+            {
+                FieldInfo info = _infoslist[i];
                 if(info.IsDefined(typeof(TestDisplayAttribute),true))
                 {
                     object infoValue = info.GetValue(_obj);
@@ -34,7 +95,7 @@ namespace Pal
                 }
             }
         }
-        public string GetValueStr(object obj)
+        public static string GetValueStr(object obj)
         {
             string str = string.Empty;
             if(obj==null)
